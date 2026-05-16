@@ -147,9 +147,8 @@ func safeDataPath(dataDir string, relativeFile string) (string, error) {
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", fmt.Errorf("requested iPXE file does not exist")
-		} else {
-			return "", fmt.Errorf("unable to resolve requested iPXE file symlinks: %w", err)
 		}
+		return "", fmt.Errorf("unable to resolve requested iPXE file symlinks: %w", err)
 	}
 
 	relPath, err := filepath.Rel(dataDirEval, requestedPathEval)

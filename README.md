@@ -80,6 +80,10 @@ By default, iPXE clients request `booty.ipxe`, and Booty serves a generated conf
 
 If a host needs a fully custom iPXE script (for example to pass hardware-specific networking parameters), set `ipxeFile` in that host's `hardware.json` entry. When set, Booty serves that file (relative to `dataDir`) instead of the generated default.
 
+Example host entry:
+
+`"ipxeFile": "custom/worker01.ipxe"` → serves `<dataDir>/custom/worker01.ipxe`.
+
 ## Additional Thoughts
 
 **Why?**

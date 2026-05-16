@@ -145,7 +145,11 @@ func safeDataPath(dataDir string, relativeFile string) (string, error) {
 
 	requestedPathEval, err := filepath.EvalSymlinks(requestedPathAbs)
 	if err != nil {
-		return "", fmt.Errorf("unable to resolve requested iPXE file symlinks: %w", err)
+		if os.IsNotExist(err) {
+			requestedPathEval = requestedPathAbs
+		} else {
+			return "", fmt.Errorf("unable to resolve requested iPXE file symlinks: %w", err)
+		}
 	}
 
 	relPath, err := filepath.Rel(dataDirEval, requestedPathEval)

@@ -121,10 +121,42 @@ func readHandler(filename string, rf io.ReaderFrom) error {
 
 func safeDataPath(dataDir string, relativeFile string) (string, error) {
 	cleanPath := filepath.Clean(relativeFile)
-	if filepath.IsAbs(cleanPath) || cleanPath == "." || strings.HasPrefix(cleanPath, "..") {
-		return "", fmt.Errorf("invalid file path")
+	if cleanPath == "." {
+		return "", fmt.Errorf("empty relative iPXE file path")
 	}
-	return filepath.Join(dataDir, cleanPath), nil
+	if filepath.IsAbs(cleanPath) {
+		return "", fmt.Errorf("absolute iPXE file paths are not allowed")
+	}
+
+	dataDirAbs, err := filepath.Abs(dataDir)
+	if err != nil {
+		return "", fmt.Errorf("unable to resolve data directory: %w", err)
+	}
+
+	requestedPathAbs, err := filepath.Abs(filepath.Join(dataDirAbs, cleanPath))
+	if err != nil {
+		return "", fmt.Errorf("unable to resolve requested iPXE file path: %w", err)
+	}
+
+	dataDirEval, err := filepath.EvalSymlinks(dataDirAbs)
+	if err != nil {
+		return "", fmt.Errorf("unable to resolve data directory symlinks: %w", err)
+	}
+
+	requestedPathEval, err := filepath.EvalSymlinks(requestedPathAbs)
+	if err != nil {
+		return "", fmt.Errorf("unable to resolve requested iPXE file symlinks: %w", err)
+	}
+
+	relPath, err := filepath.Rel(dataDirEval, requestedPathEval)
+	if err != nil {
+		return "", fmt.Errorf("unable to validate requested iPXE file path: %w", err)
+	}
+	if relPath == ".." || strings.HasPrefix(relPath, fmt.Sprintf("..%c", os.PathSeparator)) {
+		return "", fmt.Errorf("iPXE file path escapes data directory")
+	}
+
+	return requestedPathEval, nil
 }
 
 // writeHandler is called when client starts file upload to server

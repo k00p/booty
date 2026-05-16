@@ -146,7 +146,7 @@ func safeDataPath(dataDir string, relativeFile string) (string, error) {
 	requestedPathEval, err := filepath.EvalSymlinks(requestedPathAbs)
 	if err != nil {
 		if os.IsNotExist(err) {
-			requestedPathEval = requestedPathAbs
+			return "", fmt.Errorf("requested iPXE file does not exist")
 		} else {
 			return "", fmt.Errorf("unable to resolve requested iPXE file symlinks: %w", err)
 		}
@@ -156,7 +156,7 @@ func safeDataPath(dataDir string, relativeFile string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("unable to validate requested iPXE file path: %w", err)
 	}
-	if relPath == ".." || strings.HasPrefix(relPath, fmt.Sprintf("..%c", os.PathSeparator)) {
+	if relPath == ".." || strings.HasPrefix(relPath, ".."+string(os.PathSeparator)) {
 		return "", fmt.Errorf("iPXE file path escapes data directory")
 	}
 

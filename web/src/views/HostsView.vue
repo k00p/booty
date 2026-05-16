@@ -83,6 +83,9 @@ export default {
         <div class="col-2">
           <span>Ignition File</span>
         </div>
+        <div class="col-2">
+          <span>iPXE File</span>
+        </div>
         <div class="col-3">
           <span>OSTree Image</span>
         </div>
@@ -110,6 +113,10 @@ export default {
         <div class="col-2">
           <span v-show="!host.edit">{{host.ignitionFile}}</span>
           <input class="form-control" type="text" placeholder="Ignition File" v-model="host.ignitionFile" v-show="host.edit">
+        </div>
+        <div class="col-2">
+          <span v-show="!host.edit">{{host.ipxeFile}}</span>
+          <input class="form-control" type="text" placeholder="iPXE File" v-model="host.ipxeFile" v-show="host.edit">
         </div>
         <div class="col-3">
           <span v-show="!host.edit">{{host.ostreeImage}}</span>
@@ -144,6 +151,10 @@ export default {
         <div class="col-2">
           <span v-show="!host.edit">{{host.ignitionFile}}</span>
           <input class="form-control" type="text" placeholder="Ignition File" v-model="host.ignitionFile" v-show="host.edit">
+        </div>
+        <div class="col-2">
+          <span v-show="!host.edit">{{host.ipxeFile}}</span>
+          <input class="form-control" type="text" placeholder="iPXE File" v-model="host.ipxeFile" v-show="host.edit">
         </div>
         <div class="col-3">
           <span v-show="!host.edit">{{host.ostreeImage}}</span>

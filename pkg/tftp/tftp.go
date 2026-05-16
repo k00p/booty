@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -27,6 +28,7 @@ func readHandler(filename string, rf io.ReaderFrom) error {
 
 	osToLoad := "flatcar"
 	menuDefault := "run-from-disk"
+	customIPXEFile := ""
 
 	if hwAddr, _, err := arping.Ping(raddr.IP); err != nil {
 		log.Printf("Error with ARP request: %s", err)
@@ -36,6 +38,9 @@ func readHandler(filename string, rf io.ReaderFrom) error {
 		if host != nil {
 			if host.OS != "" {
 				osToLoad = host.OS
+			}
+			if host.IPXEFile != "" {
+				customIPXEFile = host.IPXEFile
 			}
 			if host.DoInstall {
 				menuDefault = "install"
@@ -54,6 +59,28 @@ func readHandler(filename string, rf io.ReaderFrom) error {
 	}
 
 	if filename == "booty.ipxe" {
+		if customIPXEFile != "" {
+			customFilePath, err := safeDataPath(viper.GetString(config.DataDir), customIPXEFile)
+			if err != nil {
+				log.Printf("Error resolving custom iPXE file %q: %v", customIPXEFile, err)
+				return err
+			}
+			file, err := os.Open(customFilePath)
+			if err != nil {
+				log.Printf("Error opening custom iPXE file %q: %v", customIPXEFile, err)
+				return err
+			}
+			defer file.Close()
+
+			n, err := rf.ReadFrom(file)
+			if err != nil {
+				log.Printf("Error reading custom iPXE config: %v\n", err)
+				return err
+			}
+			log.Printf("%d bytes sent (%s)\n", n, filename)
+			return nil
+		}
+
 		toServe := strings.Replace(PXEConfig[fmt.Sprintf("%s.ipxe", osToLoad)], "[[server]]", urlHost, -1)
 		toServe = strings.Replace(toServe, "[[menu-default]]", menuDefault, -1)
 		toServe = strings.Replace(toServe, "[[coreos-channel]]", viper.GetString(config.CoreOSChannel), -1)
@@ -90,6 +117,49 @@ func readHandler(filename string, rf io.ReaderFrom) error {
 	}
 	log.Printf("%d bytes sent (%s)\n", n, filename)
 	return nil
+}
+
+func safeDataPath(dataDir string, relativeFile string) (string, error) {
+	cleanPath := filepath.Clean(relativeFile)
+	if cleanPath == "." {
+		return "", fmt.Errorf("empty relative iPXE file path")
+	}
+	if filepath.IsAbs(cleanPath) {
+		return "", fmt.Errorf("absolute iPXE file paths are not allowed")
+	}
+
+	dataDirAbs, err := filepath.Abs(dataDir)
+	if err != nil {
+		return "", fmt.Errorf("unable to resolve data directory: %w", err)
+	}
+
+	requestedPathAbs, err := filepath.Abs(filepath.Join(dataDirAbs, cleanPath))
+	if err != nil {
+		return "", fmt.Errorf("unable to resolve requested iPXE file path: %w", err)
+	}
+
+	dataDirEval, err := filepath.EvalSymlinks(dataDirAbs)
+	if err != nil {
+		return "", fmt.Errorf("unable to resolve data directory symlinks: %w", err)
+	}
+
+	requestedPathEval, err := filepath.EvalSymlinks(requestedPathAbs)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", fmt.Errorf("requested iPXE file does not exist")
+		}
+		return "", fmt.Errorf("unable to resolve requested iPXE file symlinks: %w", err)
+	}
+
+	relPath, err := filepath.Rel(dataDirEval, requestedPathEval)
+	if err != nil {
+		return "", fmt.Errorf("unable to validate requested iPXE file path: %w", err)
+	}
+	if relPath == ".." || strings.HasPrefix(relPath, ".."+string(os.PathSeparator)) {
+		return "", fmt.Errorf("iPXE file path escapes data directory")
+	}
+
+	return requestedPathEval, nil
 }
 
 // writeHandler is called when client starts file upload to server

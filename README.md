@@ -74,6 +74,14 @@ To boot into PXE, use `pxelinux.cfg/default`
 
 To boot into iPXE, use `undionly.kpxe`
 
+### Ignition MAC resolution
+
+Booty supports `?mac=<address>` on `/ignition.json`, and this is the recommended path for reliability.
+
+iPXE boot templates include the MAC automatically in the ignition URL. Legacy/non-iPXE paths still rely on ARP fallback when no `?mac=` override is present.
+
+ARP lookup only works when the client is L2-reachable from Booty. If traffic crosses routers, NAT/proxies, or container network boundaries, ARP can time out and host identification can fail.
+
 ## Additional Thoughts
 
 **Why?**

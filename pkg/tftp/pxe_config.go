@@ -18,14 +18,14 @@ func init() {
 
 	PXEConfig["flatcar.ipxe"] = `#!ipxe
 	echo Hello from Booty!
-	kernel http://[[server]]/data/flatcar_production_pxe.vmlinuz flatcar.first_boot=1 ignition.config.url=http://[[server]]/ignition.json
+	kernel http://[[server]]/data/flatcar_production_pxe.vmlinuz flatcar.first_boot=1 ignition.config.url=http://[[server]]/ignition.json?mac=${net0/mac}
 	initrd http://[[server]]/data/flatcar_production_pxe_image.cpio.gz
 	boot`
 
 	PXEConfig["flatcar_booty.ipxe"] = `#!ipxe
 	echo "Hello from Booty!"
 	set BASEURL http://[[server]]/data/
-	set CONFIGURL http://[[server]]/ignition.json
+	set CONFIGURL http://[[server]]/ignition.json?mac=${net0/mac}
 	set menu-default [[menu-default]]
 	chain http://[[server]]/data/flatcar_booty.ipxe
 	boot`
@@ -33,7 +33,7 @@ func init() {
 	PXEConfig["coreos.ipxe"] = `#!ipxe
 	echo Hello from Booty!
 	set BASEURL http://[[server]]/data/
-	set CONFIGURL http://[[server]]/ignition.json
+	set CONFIGURL http://[[server]]/ignition.json?mac=${net0/mac}
 	set OSTREE_IMAGE [[ostree-image]]
 	set STREAM [[coreos-channel]]
 	set VERSION [[coreos-version]]
@@ -45,7 +45,7 @@ func init() {
 
 	PXEConfig["ublue.ipxe"] = `#!ipxe
 	set BASEURL http://[[server]]/data/
-	set CONFIGURL http://[[server]]/ignition.json
+	set CONFIGURL http://[[server]]/ignition.json?mac=${net0/mac}
 	set OSTREE_IMAGE [[ostree-image]]
 	set STREAM [[coreos-channel]]
 	set VERSION [[coreos-version]]

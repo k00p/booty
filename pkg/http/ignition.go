@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"text/template"
 
 	butaneConfig "github.com/coreos/butane/config"
@@ -19,6 +20,29 @@ import (
 	"github.com/spf13/viper"
 )
 
+var arpingPing = arping.Ping
+
+func resolveIgnitionRequestMAC(r *http.Request) (string, string, error) {
+	if macAddress := strings.TrimSpace(r.URL.Query().Get("mac")); macAddress != "" {
+		return macAddress, "url", nil
+	}
+
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return "", "arp", fmt.Errorf("split remote addr: %w", err)
+	}
+	remoteIP := net.ParseIP(ip)
+	if remoteIP == nil {
+		return "", "arp", fmt.Errorf("parse remote ip from %q", ip)
+	}
+
+	hwAddr, _, err := arpingPing(remoteIP)
+	if err != nil {
+		return "", "arp", err
+	}
+	return hwAddr.String(), "arp", nil
+}
+
 func handleIgnitionRequest(w http.ResponseWriter, r *http.Request) {
 	// If we don't identify the host, tell FlatCar to reboot
 	// Reboot the host till we identify it
@@ -27,34 +51,34 @@ func handleIgnitionRequest(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Ignition Request URI: %s", r.RequestURI)
 
-	macAddress := ""
-
-	if r.URL.Query().Get("mac") == "" {
-		ip, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			log.Printf("Error splitting user ip: %v is not IP:port", r.RemoteAddr)
-		}
-		remoteIP := net.ParseIP(ip)
-
-		if hwAddr, _, err := arping.Ping(remoteIP); err != nil {
-			log.Printf("Error with ARP request: %s", err)
-		} else {
-			if viper.GetBool("debug") {
-				log.Printf("Mac address from ARP `%s`", macAddress)
-			}
-			macAddress = hwAddr.String()
-		}
-	} else {
-		macAddress = r.URL.Query().Get("mac")
+	macAddress, macSource, err := resolveIgnitionRequestMAC(r)
+	if macSource == "url" {
 		if viper.GetBool("debug") {
 			log.Printf("Mac address url override `%s`", macAddress)
+		}
+	} else {
+		if err != nil {
+			log.Printf("Unable to resolve MAC via ARP for %s: %v", r.RemoteAddr, err)
+		} else if viper.GetBool("debug") {
+			log.Printf("Mac address from ARP `%s`", macAddress)
 		}
 	}
 
 	if viper.GetBool("debug") {
-		log.Printf("Using mac address `%s`", macAddress)
+		log.Printf("Using mac address `%s` (source=%s)", macAddress, macSource)
 	}
-	host := hardware.GetMacAddress(macAddress)
+
+	if macAddress == "" {
+		log.Printf("No MAC resolved for ignition request (%s from %s); returning reboot ignition. ARP fallback may fail across L3, NAT/proxy, or container boundaries.", r.RequestURI, r.RemoteAddr)
+	}
+
+	var host *hardware.Host
+	if macAddress != "" {
+		host = hardware.GetMacAddress(macAddress)
+		if host == nil {
+			log.Printf("No host entry found for resolved MAC `%s`; returning reboot ignition", macAddress)
+		}
+	}
 
 	var tpl bytes.Buffer
 

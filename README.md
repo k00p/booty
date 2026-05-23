@@ -74,13 +74,15 @@ To boot into PXE, use `pxelinux.cfg/default`
 
 To boot into iPXE, use `undionly.kpxe`
 
-### Ignition MAC resolution
+### Host-level iPXE override
 
-Booty supports `?mac=<address>` on `/ignition.json`, and this is the recommended path for reliability.
+By default, iPXE clients request `booty.ipxe`, and Booty serves a generated config based on the host `os` value.
 
-iPXE boot templates include the MAC automatically in the ignition URL. Legacy/non-iPXE paths still rely on ARP fallback when no `?mac=` override is present.
+If a host needs a fully custom iPXE script (for example to pass hardware-specific networking parameters), set `ipxeFile` in that host's `hardware.json` entry. When set, Booty serves that file (relative to `dataDir`) instead of the generated default.
 
-ARP lookup only works when the client is L2-reachable from Booty. If traffic crosses routers, NAT/proxies, or container network boundaries, ARP can time out and host identification can fail.
+Example host entry:
+
+`"ipxeFile": "custom/worker01.ipxe"` → serves `<dataDir>/custom/worker01.ipxe`.
 
 ## Additional Thoughts
 

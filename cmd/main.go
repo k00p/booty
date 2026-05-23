@@ -36,6 +36,7 @@ var args struct {
 	pxelinuxURL         string
 	ldlinuxURL          string
 	undionlyURL         string
+	skipDepsDownload    bool
 }
 
 var (
@@ -136,6 +137,13 @@ func init() {
 		"undionlyURL",
 		"",
 		"Override URL for downloading undionly.kpxe",
+	)
+
+	flags.BoolVar(
+		&args.skipDepsDownload,
+		"skipDepsDownload",
+		false,
+		"Skip downloading pxelinux.0, ldlinux.c32, and undionly.kpxe on startup (supply them manually via container build or mount)",
 	)
 
 	Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

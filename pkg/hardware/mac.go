@@ -18,6 +18,7 @@ type Host struct {
 	Booted       string `json:"booted"`
 	IgnitionFile string `json:"ignitionFile,omitempty"`
 	OS           string `json:"os,omitempty"`
+	IPXEFile     string `json:"ipxeFile,omitempty"`
 	OSTreeImage  string `json:"ostreeImage,omitempty"`
 	DoInstall    bool   `json:"doInstall,omitempty"`
 }

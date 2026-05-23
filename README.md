@@ -22,7 +22,6 @@ Flags:
       --joinString string            The kubeadm join string to use to auto-join to a K8s cluster (kubeadm join 192.168.1.10:6443 --token TOKEN --discovery-token-ca-cert-hash sha256:SHA_HASH
       --serverHttpPort int           Alternative HTTP port to use for clients (default 80)
       --serverIP string              IP address that clients can connect to (default "127.0.0.1")
-      --skipDepsDownload             Skip downloading pxelinux.0, ldlinux.c32, and undionly.kpxe on startup (supply them manually via container build or mount)
       --updateSchedule string        Cron schedule to use for cleaning up cache files (default "*/5 * * * *")
 ```
 

@@ -33,7 +33,6 @@ const (
 	PxelinuxURL           = "pxelinuxURL"
 	LdlinuxURL            = "ldlinuxURL"
 	UndionlyURL           = "undionlyURL"
-	SkipDepsDownload      = "skipDepsDownload"
 	ServerIP              = "serverIP"
 	ServerHttpPort        = "serverHttpPort"
 	JoinString            = "joinString"
@@ -98,11 +97,12 @@ func DownloadFile(url string) error {
 }
 
 func EnsureDeps() {
-	if viper.GetBool(SkipDepsDownload) {
-		log.Println("Skipping dependency downloads (skipDepsDownload is set)")
-		return
+	for _, key := range []string{PxelinuxURL, LdlinuxURL, UndionlyURL} {
+		url := viper.GetString(key)
+		if url == "skip" {
+			log.Printf("Skipping download for %s", key)
+			continue
+		}
+		DownloadFile(url)
 	}
-	DownloadFile(viper.GetString(PxelinuxURL))
-	DownloadFile(viper.GetString(LdlinuxURL))
-	DownloadFile(viper.GetString(UndionlyURL))
 }

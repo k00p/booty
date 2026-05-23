@@ -30,6 +30,9 @@ const (
 	DataDir               = "dataDir"
 	FlatcarURL            = "flatcarURL"
 	CoreOSURL             = "coreOSURL"
+	PxelinuxURL           = "pxelinuxURL"
+	LdlinuxURL            = "ldlinuxURL"
+	UndionlyURL           = "undionlyURL"
 	ServerIP              = "serverIP"
 	ServerHttpPort        = "serverHttpPort"
 	JoinString            = "joinString"
@@ -41,6 +44,9 @@ func LoadConfig(cmd *cobra.Command) {
 	viper.SetDefault(Updating, false)
 	viper.SetDefault(FlatcarURL, "https://%s.release.flatcar-linux.net/%s-usr/current")
 	viper.SetDefault(CoreOSURL, "https://builds.coreos.fedoraproject.org/prod/streams/%s/builds/%s/%s")
+	viper.SetDefault(PxelinuxURL, "http://ftp.us.debian.org/debian/dists/stable/main/installer-amd64/20230607/images/netboot/pxelinux.0")
+	viper.SetDefault(LdlinuxURL, "http://ftp.us.debian.org/debian/dists/stable/main/installer-amd64/20230607/images/netboot/debian-installer/amd64/boot-screens/ldlinux.c32")
+	viper.SetDefault(UndionlyURL, "https://raw.githubusercontent.com/jeefy/booty/main/undionly.kpxe")
 	// https://builds.coreos.fedoraproject.org/prod/streams/stable/builds/39.20231101.3.0/x86_64/fedora-coreos-39.20231101.3.0-live-kernel-x86_64
 	// https://stable.release.flatcar-linux.net/amd64-usr/current/version.txt
 
@@ -91,7 +97,7 @@ func DownloadFile(url string) error {
 }
 
 func EnsureDeps() {
-	DownloadFile("http://ftp.us.debian.org/debian/dists/stable/main/installer-amd64/20230607/images/netboot/pxelinux.0")
-	DownloadFile("http://ftp.us.debian.org/debian/dists/stable/main/installer-amd64/20230607/images/netboot/debian-installer/amd64/boot-screens/ldlinux.c32")
-	DownloadFile("https://raw.githubusercontent.com/jeefy/booty/main/undionly.kpxe")
+	DownloadFile(viper.GetString(PxelinuxURL))
+	DownloadFile(viper.GetString(LdlinuxURL))
+	DownloadFile(viper.GetString(UndionlyURL))
 }

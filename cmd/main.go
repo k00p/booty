@@ -33,6 +33,9 @@ var args struct {
 	joinString          string
 	flatcarChannel      string
 	coreOSChannel       string
+	pxelinuxURL         string
+	ldlinuxURL          string
+	undionlyURL         string
 }
 
 var (
@@ -114,6 +117,25 @@ func init() {
 		"joinString",
 		"",
 		"The kubeadm join string to use to auto-join to a K8s cluster (kubeadm join 192.168.1.10:6443 --token TOKEN --discovery-token-ca-cert-hash sha256:SHA_HASH",
+	)
+
+	flags.StringVar(
+		&args.pxelinuxURL,
+		"pxelinuxURL",
+		"",
+		"Override URL for downloading pxelinux.0",
+	)
+	flags.StringVar(
+		&args.ldlinuxURL,
+		"ldlinuxURL",
+		"",
+		"Override URL for downloading ldlinux.c32",
+	)
+	flags.StringVar(
+		&args.undionlyURL,
+		"undionlyURL",
+		"",
+		"Override URL for downloading undionly.kpxe",
 	)
 
 	Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

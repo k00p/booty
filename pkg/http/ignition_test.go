@@ -111,7 +111,7 @@ func TestHandleIgnitionRequestMacResolutionPaths(t *testing.T) {
 			handleIgnitionRequest(rr, req)
 
 			body := rr.Body.String()
-			hasRebootMarker := strings.Contains(body, "Reboot now please")
+			hasRebootMarker := strings.Contains(body, "reboot-now.service")
 			if hasRebootMarker != tc.expectReboot {
 				t.Fatalf("unexpected reboot config response. expectReboot=%v body=%s", tc.expectReboot, body)
 			}

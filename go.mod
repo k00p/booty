@@ -10,7 +10,7 @@ replace (
 require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/coreos/butane v0.19.0
-	github.com/coreos/ignition/v2 v2.17.0
+	github.com/coreos/ignition/v2 v2.17.0 // indirect
 	github.com/go-co-op/gocron v1.11.0
 	github.com/google/go-containerregistry v0.17.0
 	github.com/j-keck/arping v1.0.3

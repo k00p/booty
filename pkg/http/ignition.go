@@ -2,7 +2,6 @@ package http
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -12,7 +11,6 @@ import (
 
 	butaneConfig "github.com/coreos/butane/config"
 	butaneCommon "github.com/coreos/butane/config/common"
-	coreOSType "github.com/coreos/ignition/v2/config/v3_5_experimental/types"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/j-keck/arping"
 	"github.com/jeefy/booty/pkg/config"
@@ -130,26 +128,28 @@ func handleIgnitionRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if host == nil {
-		coreosConfig := coreOSType.Config{}
-		coreosConfig.Ignition.Version = "3.4.0"
-		truePointer := true
-		contentsPointer := `
-[Service]
-Type=simple
-ExecStart=reboot
+		rebootButane := []byte(`variant: fcos
+version: 1.5.0
+systemd:
+  units:
+  - name: reboot-now.service
+    enabled: true
+    contents: |
+      [Unit]
+      Description=Reboot due to unrecognized host
 
-[Install]
-WantedBy=default.target
-`
-		coreosConfig.Systemd.Units = append(coreosConfig.Systemd.Units, coreOSType.Unit{
-			Name:     "Reboot now please",
-			Enabled:  &truePointer,
-			Contents: &contentsPointer,
+      [Service]
+      Type=exec
+      ExecStart=/sbin/reboot
+
+      [Install]
+      WantedBy=multi-user.target
+`)
+		dataOut, _, err := butaneConfig.TranslateBytes(rebootButane, butaneCommon.TranslateBytesOptions{
+			Pretty: true,
 		})
-		var dataOut []byte
-		dataOut, err := json.Marshal(&coreosConfig)
 		if err != nil {
-			w.Write([]byte(fmt.Sprintf("Failed to marshal output: %v", err)))
+			w.Write([]byte(fmt.Sprintf("Failed to generate reboot ignition: %v", err)))
 			return
 		}
 		w.Write(dataOut)

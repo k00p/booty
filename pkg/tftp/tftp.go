@@ -65,14 +65,14 @@ func readHandler(filename string, rf io.ReaderFrom) error {
 				log.Printf("Error resolving custom iPXE file %q: %v", customIPXEFile, err)
 				return err
 			}
-			file, err := os.Open(customFilePath)
+			rawBytes, err := os.ReadFile(customFilePath)
 			if err != nil {
-				log.Printf("Error opening custom iPXE file %q: %v", customIPXEFile, err)
+				log.Printf("Error reading custom iPXE file %q: %v", customIPXEFile, err)
 				return err
 			}
-			defer file.Close()
-
-			n, err := rf.ReadFrom(file)
+			toServe := renderIPXETemplate(string(rawBytes), urlHost, menuDefault)
+			r := strings.NewReader(toServe)
+			n, err := rf.ReadFrom(r)
 			if err != nil {
 				log.Printf("Error reading custom iPXE config: %v\n", err)
 				return err
@@ -81,12 +81,7 @@ func readHandler(filename string, rf io.ReaderFrom) error {
 			return nil
 		}
 
-		toServe := strings.Replace(PXEConfig[fmt.Sprintf("%s.ipxe", osToLoad)], "[[server]]", urlHost, -1)
-		toServe = strings.Replace(toServe, "[[menu-default]]", menuDefault, -1)
-		toServe = strings.Replace(toServe, "[[coreos-channel]]", viper.GetString(config.CoreOSChannel), -1)
-		toServe = strings.Replace(toServe, "[[coreos-arch]]", viper.GetString(config.CoreOSArchitecture), -1)
-		toServe = strings.Replace(toServe, "[[coreos-version]]", viper.GetString(config.CurrentCoreOSVersion), -1)
-
+		toServe := renderIPXETemplate(PXEConfig[fmt.Sprintf("%s.ipxe", osToLoad)], urlHost, menuDefault)
 		r := strings.NewReader(toServe)
 		n, err := rf.ReadFrom(r)
 		if err != nil {
@@ -117,6 +112,17 @@ func readHandler(filename string, rf io.ReaderFrom) error {
 	}
 	log.Printf("%d bytes sent (%s)\n", n, filename)
 	return nil
+}
+
+func renderIPXETemplate(content, urlHost, menuDefault string) string {
+	r := strings.NewReplacer(
+		"[[server]]", urlHost,
+		"[[menu-default]]", menuDefault,
+		"[[coreos-channel]]", viper.GetString(config.CoreOSChannel),
+		"[[coreos-arch]]", viper.GetString(config.CoreOSArchitecture),
+		"[[coreos-version]]", viper.GetString(config.CurrentCoreOSVersion),
+	)
+	return r.Replace(content)
 }
 
 func safeDataPath(dataDir string, relativeFile string) (string, error) {

@@ -57,7 +57,7 @@ func TestRenderIPXETemplate_MenuDefaultRunFromDisk(t *testing.T) {
 }
 
 func TestRenderIPXETemplate_NoPlaceholders(t *testing.T) {
-	input := `#!ipxe\necho hello`
+	input := "#!ipxe\necho hello"
 	got := renderIPXETemplate(input, "server", "install")
 	if got != input {
 		t.Errorf("content without placeholders should be unchanged; got %q", got)

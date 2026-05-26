@@ -115,12 +115,14 @@ func readHandler(filename string, rf io.ReaderFrom) error {
 }
 
 func renderIPXETemplate(content, urlHost, menuDefault string) string {
-	s := strings.Replace(content, "[[server]]", urlHost, -1)
-	s = strings.Replace(s, "[[menu-default]]", menuDefault, -1)
-	s = strings.Replace(s, "[[coreos-channel]]", viper.GetString(config.CoreOSChannel), -1)
-	s = strings.Replace(s, "[[coreos-arch]]", viper.GetString(config.CoreOSArchitecture), -1)
-	s = strings.Replace(s, "[[coreos-version]]", viper.GetString(config.CurrentCoreOSVersion), -1)
-	return s
+	r := strings.NewReplacer(
+		"[[server]]", urlHost,
+		"[[menu-default]]", menuDefault,
+		"[[coreos-channel]]", viper.GetString(config.CoreOSChannel),
+		"[[coreos-arch]]", viper.GetString(config.CoreOSArchitecture),
+		"[[coreos-version]]", viper.GetString(config.CurrentCoreOSVersion),
+	)
+	return r.Replace(content)
 }
 
 func safeDataPath(dataDir string, relativeFile string) (string, error) {
